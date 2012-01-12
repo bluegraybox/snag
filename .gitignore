@@ -2,3 +2,5 @@
 .project
 bin
 gen
+diff.txt
+commit.txt

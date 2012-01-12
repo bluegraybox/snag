@@ -18,11 +18,11 @@ public class DbAdapter {
 	private static final String MEMO_ID = "memo_id";
 	private static final String MEMO_TAG = "memo_tag";
 	private static final String TAG = "tag";
-	private static final String NAME = "name";
+	static final String NAME = "name";
 	static final String BODY = "body";
 	static final String SLUG = "slug";
 	private static final String MEMO = "memo";
-	public static final int DB_VERSION = 1;
+	public static final int DB_VERSION = 2;
 	public static final String DB_NAME = "snag";
 	private static final int SLUG_MAX = 30;
 	private static final String CREATED = "created";
@@ -44,6 +44,7 @@ public class DbAdapter {
             db.execSQL(mRes.getString(R.string.create_memo));
             db.execSQL(mRes.getString(R.string.create_tag));
             db.execSQL(mRes.getString(R.string.create_memo_tag));
+            db.execSQL(mRes.getString(R.string.create_memo_tag_view));
 		}
 
 		@Override
@@ -51,6 +52,7 @@ public class DbAdapter {
             Log.w(this.getClass().getName(),
             		"Upgrading database from version " + oldVersion + " to "
                     + newVersion + ", which will destroy all old data");
+            db.execSQL(mRes.getString(R.string.drop_memo_tag_view));
             db.execSQL(mRes.getString(R.string.drop_memo_tag));
             db.execSQL(mRes.getString(R.string.drop_memo));
             db.execSQL(mRes.getString(R.string.drop_tag));
@@ -60,13 +62,11 @@ public class DbAdapter {
 
 	private Helper mHelper;
 	private SQLiteDatabase mDb;
-	private Resources mResources;
 	private SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
 
 	public DbAdapter(Context context) {
 		mHelper = new Helper(context);
 		mDb = mHelper.getWritableDatabase();
-		mResources = context.getResources();
 	}
 	
 	public void close() {
@@ -96,14 +96,25 @@ public class DbAdapter {
 		return slug;
 	}
 	
-	public void deleteMemo(Long memo_id) {
-		mDb.delete(MEMO, "?=?", new String[]{MEMO_ID, memo_id.toString()});
+	public void deleteMemo(Long memoId) {
+		String where = ID+"="+memoId; // have to do it like this or memoId gets treated like a string.
+		mDb.delete(MEMO, where, null);
 	}
 	
-	public long createTag(String name) {
+	public long createTag(Long memoId, String name) {
 		ContentValues values = new ContentValues();
 		values.put(NAME, name);
-		return mDb.insert(TAG, null, values);
+		Long tagId = null;
+		try {
+			mDb.beginTransaction();
+			tagId = mDb.insert(TAG, null, values);
+			addMemoTag(memoId, tagId);
+			mDb.setTransactionSuccessful();
+		}
+		finally {
+			mDb.endTransaction();
+		}
+		return tagId;
 	}
 	
 	public void addMemoTag(Long memo_id, Long tag_id) {
@@ -113,34 +124,67 @@ public class DbAdapter {
 		mDb.insert(MEMO_TAG, null, values);
 	}
 	
-	public void removeMemoTag(Long memo_id, Long tag_id) {
-		mDb.delete(MEMO_TAG, "?=? and ?=?", new String[]{MEMO_ID, memo_id.toString(), TAG_ID, tag_id.toString()});
+	public int removeMemoTag(Long memoId, Long tagId) {
+		String where = MEMO_ID+"="+memoId+" and "+TAG_ID+"="+tagId;
+		return mDb.delete(MEMO_TAG, where, null);
 	}
 	
-	public void setMemoTags(Long memo_id, List<Long> tag_ids) {
-		mDb.beginTransaction();
-		// Delete all previous tags for this memo, then add the new ones.
-		mDb.delete(MEMO_TAG, "?=?", new String[]{MEMO_ID, memo_id.toString()});
-		for (Long tag_id : tag_ids) {
-			ContentValues values = new ContentValues();
-			values.put(MEMO_ID, memo_id);
-			values.put(TAG_ID, tag_id);
-			mDb.insert(MEMO_TAG, null, values);
+	public void setMemoTags(Long memoId, List<Long> tagIds) {
+		try {
+			mDb.beginTransaction();
+			String where = MEMO_ID+"="+memoId; // have to do it like this or memoId gets treated like a string.
+			// Delete all previous tags for this memo, then add the new ones.
+			mDb.delete(MEMO_TAG, where, null);
+			for (Long tagId : tagIds) {
+				addMemoTag(memoId, tagId);
+			}
+			mDb.setTransactionSuccessful();
 		}
-		mDb.endTransaction();
+		finally {
+			mDb.endTransaction();
+		}
 	}
 
 	public Cursor getMemos() {
-		return mDb.query(MEMO, new String[]{ BODY }, null, null, null, null, null);
+		return mDb.query(MEMO, new String[]{ ID, SLUG, BODY }, null, null, null, null, null);
 	}
 	
-	public Cursor getMemo(Long memo_id) {
-		return mDb.query(MEMO, new String[]{ BODY }, "where ? = ?", new String[]{ ID, memo_id.toString() }, null, null, null);
+	public Cursor getMemo(Long memoId) {
+		String where = ID+"="+memoId; // have to do it like this or memoId gets treated like a string.
+		Cursor memo = mDb.query(MEMO, new String[]{ ID, SLUG, BODY }, where, null, null, null, null);
+		if (memo != null) {
+			memo.moveToFirst();
+		}
+		return memo;
+	}
+	
+	public Cursor getMemoTags(Long memoId) {
+		// have to do it like this or memoId gets treated like a string.
+//		String where = MEMO_TAG+"."+MEMO_ID+"="+memoId+" and "+MEMO_TAG+"."+TAG_ID+"="+TAG+"."+ID;
+//		return mDb.query("memo_tag_view", new String[]{ TAG_ID, NAME }, where, null, null, null, null);
+		String where = MEMO_ID+"="+memoId;
+		return mDb.query("memo_tag_view", new String[]{ ID, NAME }, where, null, null, null, null);
 	}
 
-	public boolean updateMemo(Long memo_id, String body) {
+	public boolean updateMemo(Long memoId, String body) {
         ContentValues values = new ContentValues();
         values.put(BODY, body);
-        return mDb.update(MEMO, values, "? = ?", new String[]{ ID, memo_id.toString() }) > 0;
+		String where = ID+"="+memoId; // have to do it like this or memoId gets treated like a string.
+        return mDb.update(MEMO, values, where, null) > 0;
+	}
+
+	public void toggleTag(Long memoId, Long tagId) {
+		try {
+			mDb.beginTransaction();
+			int deleted = removeMemoTag(memoId, tagId);
+			if (deleted == 0) {
+				// if not, add one
+				addMemoTag(memoId, tagId);
+			}
+			mDb.setTransactionSuccessful();
+		}
+		finally {
+			mDb.endTransaction();
+		}
 	}
 }
