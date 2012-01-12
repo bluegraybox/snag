@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#ffffff"
+    android:orientation="vertical" >
+	
+	<EditText android:id="@+id/body" android:layout_width="match_parent"
+		android:layout_height="wrap_content"
+		android:layout_weight="1"
+		android:scrollbars="vertical" />
+	
+	<LinearLayout android:orientation="horizontal"
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content">
+
+		<Button
+		    android:id="@+id/save_memo"
+		    android:gravity="fill_horizontal"
+		    android:layout_weight="1"
+		    android:layout_width="wrap_content"
+		    android:layout_height="wrap_content"
+		    android:text="@string/save_memo" />
+
+		<Button
+		    android:id="@+id/delete_memo"
+		    android:gravity="fill_horizontal"
+		    android:layout_weight="1"
+		    android:layout_width="wrap_content"
+		    android:layout_height="wrap_content"
+		    android:text="@string/delete_memo" />
+
+	</LinearLayout>
+	
+</LinearLayout>

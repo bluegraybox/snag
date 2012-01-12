@@ -4,4 +4,35 @@
     <string name="hello">Hello World, Snag!</string>
     <string name="app_name">Snag</string>
 
+    <string name="about">About Snag</string>
+    <string name="about_body">Simple memo app for snagging ideas and tagging them.</string>
+    <string name="close">Close</string>
+
+    <string name="edit_memo">Edit</string>
+    <string name="save_memo">Ok</string>
+    <string name="delete_memo">Delete</string>
+    
+    <string name="enable_foreign_keys">pragma foreign_keys = ON;</string>
+    <string name="create_memo">create table memo (
+        	_id integer primary key autoincrement,
+        	body text not null,
+        	slug text not null,
+        	created text not null,
+        	updated text not null
+        	);</string>
+    <string name="create_tag">create table tag (
+        	_id integer primary key autoincrement,
+        	name text not null
+        	);</string>
+    <string name="create_memo_tag">create table memo_tag (
+        	_id integer primary key autoincrement,
+        	memo_id integer,
+        	tag_id integer,
+        	foreign key memo_id references memo(_id),
+        	foreign key tag_id references tag(_id),
+        	);</string>
+    <string name="drop_memo">drop table if exists memo;</string>
+    <string name="drop_tag">drop table if exists tag;</string>
+    <string name="drop_memo_tag">drop table if exists memo_tag;</string>
+    
 </resources>
