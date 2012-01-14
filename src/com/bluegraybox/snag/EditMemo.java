@@ -74,9 +74,9 @@ public class EditMemo extends Activity {
 	private void populateFields() {
 		if (mMemoId != null) {
 			Cursor memo = mDb.getMemo(mMemoId);
-			startManagingCursor(memo);
 	    	int index = memo.getColumnIndexOrThrow(DbAdapter.BODY);
 			mBodyText.setText(memo.getString(index));
+			memo.close();
 		}
 	}
 

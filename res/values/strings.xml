@@ -16,6 +16,7 @@
     
     <string name="add_new_tag">Add</string>
     <string name="save_tags">Save</string>
+    <string name="no_tags">No tags - create a new one!</string>
     
     <string name="enable_foreign_keys">pragma foreign_keys = ON;</string>
     <string name="create_memo">create table memo (
@@ -36,9 +37,6 @@
         	foreign key (memo_id) references memo(_id),
         	foreign key (tag_id) references tag(_id)
         	);</string>
-    <string name="create_memo_tag_view">create view memo_tag_view as
-        select memo_tag.memo_id as memo_id, memo_tag.tag_id as _id, tag.name as name
-        from memo_tag, tag where memo_tag.tag_id = tag._id;</string>
     <string name="drop_memo">drop table if exists memo;</string>
     <string name="drop_tag">drop table if exists tag;</string>
     <string name="drop_memo_tag">drop table if exists memo_tag;</string>

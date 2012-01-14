@@ -6,13 +6,17 @@ import android.app.Activity;
 import android.app.ListActivity;
 import android.content.Intent;
 import android.database.Cursor;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.text.Editable;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.SimpleCursorAdapter;
+import android.widget.SimpleCursorAdapter.ViewBinder;
+import android.widget.TextView;
 
 public class TagMemo extends ListActivity {
 
@@ -71,14 +75,28 @@ public class TagMemo extends ListActivity {
 			String[] from = new String[]{ DbAdapter.NAME };
 			int[] to = new int[]{ R.id.tag_name };
 			SimpleCursorAdapter memos = new SimpleCursorAdapter(this, R.layout.tag_row, tags, from, to);
+			memos.setViewBinder(new ViewBinder() {
+				@Override
+				public boolean setViewValue(View view, Cursor cursor, int columnIndex) {
+					String tagName = cursor.getString(cursor.getColumnIndexOrThrow(DbAdapter.NAME));
+					long memoId = cursor.getLong(cursor.getColumnIndexOrThrow(DbAdapter.MEMO_ID));
+					TextView name = (TextView) view.findViewById(R.id.tag_name);
+					name.setText(tagName);
+					name.setTextColor((memoId != 0) ? Color.GREEN : Color.BLACK);
+					return true;
+				}
+			});
 			setListAdapter(memos);
+			mNewTagText.setText("");
 		}
 	}
 
 	@Override
 	protected void onListItemClick(ListView l, View v, int position, long id) {
 		super.onListItemClick(l, v, position, id);
-		mDb.toggleTag(mMemoId, id);
+		boolean added = mDb.toggleTag(mMemoId, id);
+		TextView name = (TextView) v.findViewById(R.id.tag_name);
+		name.setTextColor(added ? Color.GREEN : Color.BLACK);
 	}
 
 	@Override
@@ -104,15 +122,7 @@ public class TagMemo extends ListActivity {
 		Editable text = mNewTagText.getText();
 		String body = text.toString();
 		if (text != null && ! "".equals(body.trim())) {
-			if (mMemoId == null) {
-				long id = mDb.createMemo(body);
-				if (id > 0) {
-					mMemoId = id;
-				}
-			}
-			else {
-				mDb.updateMemo(mMemoId, body);
-			}
+			mDb.createTag(mMemoId, body);
 		}
 	}
 

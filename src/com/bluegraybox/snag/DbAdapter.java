@@ -15,14 +15,14 @@ import android.util.Log;
 public class DbAdapter {
 	
     private static final String TAG_ID = "tag_id";
-	private static final String MEMO_ID = "memo_id";
+	static final String MEMO_ID = "memo_id";
 	private static final String MEMO_TAG = "memo_tag";
 	private static final String TAG = "tag";
 	static final String NAME = "name";
 	static final String BODY = "body";
 	static final String SLUG = "slug";
 	private static final String MEMO = "memo";
-	public static final int DB_VERSION = 2;
+	public static final int DB_VERSION = 4;
 	public static final String DB_NAME = "snag";
 	private static final int SLUG_MAX = 30;
 	private static final String CREATED = "created";
@@ -44,7 +44,6 @@ public class DbAdapter {
             db.execSQL(mRes.getString(R.string.create_memo));
             db.execSQL(mRes.getString(R.string.create_tag));
             db.execSQL(mRes.getString(R.string.create_memo_tag));
-            db.execSQL(mRes.getString(R.string.create_memo_tag_view));
 		}
 
 		@Override
@@ -73,6 +72,8 @@ public class DbAdapter {
 		mHelper.close();
 	}
 
+	/* Memo operations */
+	
 	public long createMemo(String text) {
 		ContentValues values = new ContentValues();
 		String slug = getSlug(text);
@@ -82,6 +83,17 @@ public class DbAdapter {
 		values.put(CREATED, now);
 		values.put(UPDATED, now);
 		return mDb.insert(MEMO, null, values);
+	}
+
+	public boolean updateMemo(Long memoId, String text) {
+        ContentValues values = new ContentValues();
+		String slug = getSlug(text);
+		String now = dateFormat.format(new Date());
+        values.put(BODY, text);
+		values.put(SLUG, slug);
+		values.put(UPDATED, now);
+		String where = ID+"="+memoId; // have to do it like this or memoId gets treated like a string.
+        return mDb.update(MEMO, values, where, null) > 0;
 	}
 
 	private String getSlug(String text) {
@@ -100,27 +112,62 @@ public class DbAdapter {
 		String where = ID+"="+memoId; // have to do it like this or memoId gets treated like a string.
 		mDb.delete(MEMO, where, null);
 	}
+
+	public Cursor getMemos() {
+		return mDb.query(MEMO, new String[]{ ID, SLUG, BODY }, null, null, null, null, null);
+	}
 	
-	public long createTag(Long memoId, String name) {
+	public Cursor getMemo(Long memoId) {
+		String where = ID+"="+memoId; // have to do it like this or memoId gets treated like a string.
+		Cursor memo = mDb.query(MEMO, new String[]{ ID, SLUG, BODY }, where, null, null, null, null);
+		if (memo != null) {
+			memo.moveToFirst();
+		}
+		return memo;
+	}
+	
+	/* Tag operations */
+
+	public void createTag(Long memoId, String name) {
+		name = name.trim();
+		if ("".equals(name))
+				return;
 		ContentValues values = new ContentValues();
 		values.put(NAME, name);
-		Long tagId = null;
+		Long tagId = getTagId(name);
 		try {
 			mDb.beginTransaction();
-			tagId = mDb.insert(TAG, null, values);
+			if (tagId == null) {
+				tagId = mDb.insert(TAG, null, values);
+			}
 			addMemoTag(memoId, tagId);
 			mDb.setTransactionSuccessful();
 		}
 		finally {
 			mDb.endTransaction();
 		}
+		return;
+	}
+
+	private Long getTagId(String name) {
+		Long tagId = null;
+		Cursor tag = mDb.query(TAG, new String[]{ ID }, NAME+"=?", new String[]{ name }, null, null, null);
+		if (tag != null) {
+			if (tag.moveToFirst()) {
+				tagId = tag.getLong(tag.getColumnIndexOrThrow(ID));
+			}
+		}
+		tag.close();
 		return tagId;
 	}
 	
+	/* Memo_Tag operations */
+
 	public void addMemoTag(Long memo_id, Long tag_id) {
 		ContentValues values = new ContentValues();
 		values.put(MEMO_ID, memo_id);
 		values.put(TAG_ID, tag_id);
+		// If this is a duplicate, insert() will just return -1.
 		mDb.insert(MEMO_TAG, null, values);
 	}
 	
@@ -144,36 +191,17 @@ public class DbAdapter {
 			mDb.endTransaction();
 		}
 	}
-
-	public Cursor getMemos() {
-		return mDb.query(MEMO, new String[]{ ID, SLUG, BODY }, null, null, null, null, null);
-	}
-	
-	public Cursor getMemo(Long memoId) {
-		String where = ID+"="+memoId; // have to do it like this or memoId gets treated like a string.
-		Cursor memo = mDb.query(MEMO, new String[]{ ID, SLUG, BODY }, where, null, null, null, null);
-		if (memo != null) {
-			memo.moveToFirst();
-		}
-		return memo;
-	}
 	
 	public Cursor getMemoTags(Long memoId) {
-		// have to do it like this or memoId gets treated like a string.
-//		String where = MEMO_TAG+"."+MEMO_ID+"="+memoId+" and "+MEMO_TAG+"."+TAG_ID+"="+TAG+"."+ID;
-//		return mDb.query("memo_tag_view", new String[]{ TAG_ID, NAME }, where, null, null, null, null);
-		String where = MEMO_ID+"="+memoId;
-		return mDb.query("memo_tag_view", new String[]{ ID, NAME }, where, null, null, null, null);
+		// This didn't work as an outer join because memo_id is always set.
+		String query = "select tag._id as _id, tag.name as name, memo_tag.memo_id as memo_id" +
+				" from tag, memo_tag where tag._id = memo_tag.tag_id and memo_tag.memo_id = " + memoId +
+				" UNION ALL select tag._id as _id, tag.name as name, 0 from tag" + 
+				" WHERE NOT EXISTS (select memo_tag._id from memo_tag where memo_tag.tag_id = tag._id and memo_tag.memo_id = " + memoId +")";
+		return mDb.rawQuery(query, null);
 	}
 
-	public boolean updateMemo(Long memoId, String body) {
-        ContentValues values = new ContentValues();
-        values.put(BODY, body);
-		String where = ID+"="+memoId; // have to do it like this or memoId gets treated like a string.
-        return mDb.update(MEMO, values, where, null) > 0;
-	}
-
-	public void toggleTag(Long memoId, Long tagId) {
+	public boolean toggleTag(Long memoId, Long tagId) {
 		try {
 			mDb.beginTransaction();
 			int deleted = removeMemoTag(memoId, tagId);
@@ -182,6 +210,7 @@ public class DbAdapter {
 				addMemoTag(memoId, tagId);
 			}
 			mDb.setTransactionSuccessful();
+			return (deleted == 0);
 		}
 		finally {
 			mDb.endTransaction();
