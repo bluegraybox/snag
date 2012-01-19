@@ -22,6 +22,7 @@
         </activity>
         <activity android:name=".EditMemo" />
         <activity android:name=".TagMemo" />
+        <activity android:name=".FilterMemos" />
         <activity android:name=".About" />
     </application>
 

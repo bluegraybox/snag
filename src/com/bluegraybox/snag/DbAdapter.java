@@ -10,6 +10,7 @@ import android.content.res.Resources;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.text.TextUtils;
 import android.util.Log;
 
 public class DbAdapter {
@@ -66,6 +67,14 @@ public class DbAdapter {
 	public DbAdapter(Context context) {
 		mHelper = new Helper(context);
 		mDb = mHelper.getWritableDatabase();
+        tidy();
+	}
+
+	public void tidy() {
+		mDb.execSQL("delete from tag where name=''");
+        mDb.execSQL("delete from memo where body='' or slug=''");
+        mDb.execSQL("delete from memo_tag where memo_id not in (select distinct _id from memo)");
+        mDb.execSQL("delete from tag where not exists (select * from memo_tag where tag_id = tag._id)");
 	}
 	
 	public void close() {
@@ -117,6 +126,13 @@ public class DbAdapter {
 		return mDb.query(MEMO, new String[]{ ID, SLUG, BODY }, null, null, null, null, null);
 	}
 	
+	public Cursor getFilteredMemos(List<Long> tagIdList) {
+		String tagsText = TextUtils.join(",", tagIdList);
+		String query = "select memo._id as _id, memo.slug as slug, memo.body as body from memo, memo_tag" +
+				" where memo._id = memo_tag.memo_id and memo_tag.tag_id in ("+tagsText+")";
+		return mDb.rawQuery(query, null);
+	}
+	
 	public Cursor getMemo(Long memoId) {
 		String where = ID+"="+memoId; // have to do it like this or memoId gets treated like a string.
 		Cursor memo = mDb.query(MEMO, new String[]{ ID, SLUG, BODY }, where, null, null, null, null);
@@ -159,6 +175,10 @@ public class DbAdapter {
 		}
 		tag.close();
 		return tagId;
+	}
+	
+	public Cursor getTags() {
+		return mDb.query(TAG, new String[]{ ID, NAME }, null, null, null, null, null);
 	}
 	
 	/* Memo_Tag operations */

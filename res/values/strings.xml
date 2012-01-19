@@ -8,7 +8,8 @@
     <string name="about">About Snag</string>
     <string name="about_body">Simple memo app for snagging ideas and tagging them.</string>
     <string name="close">Close</string>
-
+    <string name="tidy_db">Tidy Database</string>
+    
     <string name="edit_memo">Edit</string>
     <string name="save_memo">Ok</string>
     <string name="delete_memo">Delete</string>
@@ -17,6 +18,11 @@
     <string name="add_new_tag">Add</string>
     <string name="save_tags">Save</string>
     <string name="no_tags">No tags - create a new one!</string>
+
+    <string name="filter_memos">Filter</string>
+    <string name="clear_memo_filter">Clear Filter</string>
+    <string name="filter">Filter</string>
+    <string name="filter_memos_title">Filter Memos by Tags</string>
     
     <string name="enable_foreign_keys">pragma foreign_keys = ON;</string>
     <string name="create_memo">create table memo (
