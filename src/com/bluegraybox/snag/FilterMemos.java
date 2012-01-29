@@ -26,7 +26,7 @@ public class FilterMemos extends ListActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         mThis = this;  // So inner classes can reference us
-        mDb = new DbAdapter(this);
+        mDb = DbAdapter.instance(this);
         
         setContentView(R.layout.filter_memos);
         setTitle(R.string.filter_memos_title);

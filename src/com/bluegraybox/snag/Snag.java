@@ -1,7 +1,6 @@
 package com.bluegraybox.snag;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import android.app.ListActivity;
@@ -34,7 +33,7 @@ public class Snag extends ListActivity {
         super.onCreate(savedInstanceState);
         mThis = this;  // For our inner classes & callbacks
         setContentView(R.layout.main);
-        mDb = new DbAdapter(this);
+        mDb = DbAdapter.instance(this);
         
         Button addButton = (Button) findViewById(R.id.add_memo);
         addButton.setOnClickListener(new View.OnClickListener() {

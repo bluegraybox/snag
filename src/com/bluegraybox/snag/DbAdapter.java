@@ -60,11 +60,20 @@ public class DbAdapter {
 		}
     }
 
+	private static DbAdapter mAdapter = null;
+
 	private Helper mHelper;
 	private SQLiteDatabase mDb;
 	private SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
 
-	public DbAdapter(Context context) {
+	public synchronized static DbAdapter instance(Context context) {
+		if (mAdapter == null) {
+			mAdapter = new DbAdapter(context);
+		}
+		return mAdapter;
+	}
+	
+	private DbAdapter(Context context) {
 		mHelper = new Helper(context);
 		mDb = mHelper.getWritableDatabase();
         tidy();
@@ -156,7 +165,7 @@ public class DbAdapter {
 			if (tagId == null) {
 				tagId = mDb.insert(TAG, null, values);
 			}
-			addMemoTag(memoId, tagId);
+			long memoTagId = addMemoTag(memoId, tagId);
 			mDb.setTransactionSuccessful();
 		}
 		finally {
@@ -183,12 +192,13 @@ public class DbAdapter {
 	
 	/* Memo_Tag operations */
 
-	public void addMemoTag(Long memo_id, Long tag_id) {
+	private long addMemoTag(Long memo_id, Long tag_id) {
 		ContentValues values = new ContentValues();
 		values.put(MEMO_ID, memo_id);
 		values.put(TAG_ID, tag_id);
 		// If this is a duplicate, insert() will just return -1.
-		mDb.insert(MEMO_TAG, null, values);
+		long added = mDb.insert(MEMO_TAG, null, values);
+		return added;
 	}
 	
 	public int removeMemoTag(Long memoId, Long tagId) {
@@ -196,7 +206,8 @@ public class DbAdapter {
 		return mDb.delete(MEMO_TAG, where, null);
 	}
 	
-	public void setMemoTags(Long memoId, List<Long> tagIds) {
+	// NOT USED
+	private void setMemoTags(Long memoId, List<Long> tagIds) {
 		try {
 			mDb.beginTransaction();
 			String where = MEMO_ID+"="+memoId; // have to do it like this or memoId gets treated like a string.
@@ -225,9 +236,10 @@ public class DbAdapter {
 		try {
 			mDb.beginTransaction();
 			int deleted = removeMemoTag(memoId, tagId);
+			long added = 0;
 			if (deleted == 0) {
 				// if not, add one
-				addMemoTag(memoId, tagId);
+				added = addMemoTag(memoId, tagId);
 			}
 			mDb.setTransactionSuccessful();
 			return (deleted == 0);

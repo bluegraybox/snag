@@ -20,7 +20,7 @@ public class EditMemo extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         
-        mDb = new DbAdapter(this);
+        mDb = DbAdapter.instance(this);
         mThis = this;  // So inner classes can reference us
         
         setContentView(R.layout.edit_memo);

@@ -1,15 +1,10 @@
 package com.bluegraybox.snag;
 
-import java.util.Set;
-
-import android.app.Activity;
 import android.app.ListActivity;
-import android.content.Intent;
 import android.database.Cursor;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.text.Editable;
-import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -30,7 +25,7 @@ public class TagMemo extends ListActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         mThis = this;  // So inner classes can reference us
-        mDb = new DbAdapter(this);
+        mDb = DbAdapter.instance(this);
         
         setContentView(R.layout.tag_memo);
         setTitle(R.string.tag_memo);
@@ -78,9 +73,11 @@ public class TagMemo extends ListActivity {
 			memos.setViewBinder(new ViewBinder() {
 				@Override
 				public boolean setViewValue(View view, Cursor cursor, int columnIndex) {
-					String tagName = cursor.getString(cursor.getColumnIndexOrThrow(DbAdapter.NAME));
-					long memoId = cursor.getLong(cursor.getColumnIndexOrThrow(DbAdapter.MEMO_ID));
-					TextView name = (TextView) view.findViewById(R.id.tag_name);
+					int nameIndex = cursor.getColumnIndexOrThrow(DbAdapter.NAME);
+					int memoIdIndex = cursor.getColumnIndexOrThrow(DbAdapter.MEMO_ID);
+					String tagName = cursor.getString(nameIndex);
+					long memoId = cursor.getLong(memoIdIndex);
+					TextView name = (TextView) view;  // view.findViewById(R.id.tag_name);
 					name.setText(tagName);
 					name.setTextColor((memoId != 0) ? Color.GREEN : Color.BLACK);
 					return true;
