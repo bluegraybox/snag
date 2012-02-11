@@ -1,5 +1,8 @@
 package com.bluegraybox.snag;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import android.app.Activity;
 import android.content.Intent;
 import android.database.Cursor;
@@ -64,6 +67,7 @@ public class EditMemo extends Activity {
 
         tagButton.setOnClickListener(new View.OnClickListener() {
             public void onClick(View view) {
+            	saveState(); // sets mMemoId
         		Intent i = new Intent(mThis, TagMemo.class);
         		i.putExtra(DbAdapter.ID, mMemoId);
         		startActivityForResult(i, ACTIVITY_TAG);
@@ -110,6 +114,15 @@ public class EditMemo extends Activity {
 		}
 		else {
 			mDb.updateMemo(mMemoId, body);
+		}
+	}
+
+	@Override
+	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+		super.onActivityResult(requestCode, resultCode, data);
+		if (requestCode == ACTIVITY_TAG) {
+            setResult(RESULT_OK);
+            finish();
 		}
 	}
 

@@ -8,7 +8,6 @@ import android.content.Intent;
 import android.database.Cursor;
 import android.graphics.Color;
 import android.os.Bundle;
-import android.text.Editable;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ListView;
@@ -37,19 +36,24 @@ public class FilterMemos extends ListActivity {
         saveButton.setOnClickListener(new View.OnClickListener() {
             public void onClick(View view) {
             	Intent data = new Intent();
-            	int tagCount = mFilterTagIds.size();
-				long[] tagIds = new long[tagCount];
-            	for (int i = 0; i < tagCount; i++) {
-					tagIds[i] = mFilterTagIds.get(i);
-				}
-//				data.getExtras().putLongArray(Snag.FILTERS, tagIds);
-            	data.putExtra(Snag.FILTERS, tagIds);
-            	long[] check = data.getExtras().getLongArray(Snag.FILTERS);
+            	addTags(data);
             	setResult(RESULT_OK, data);
                 finish();
             }
         });
     }
+
+
+	private void addTags(Intent data) {
+		int tagCount = mFilterTagIds.size();
+		long[] tagIds = new long[tagCount];
+		for (int i = 0; i < tagCount; i++) {
+			tagIds[i] = mFilterTagIds.get(i);
+		}
+//				data.getExtras().putLongArray(Snag.FILTERS, tagIds);
+		data.putExtra(Snag.FILTERS, tagIds);
+		long[] check = data.getExtras().getLongArray(Snag.FILTERS);
+	}
 
 
 	private void populateFields() {
@@ -70,8 +74,13 @@ public class FilterMemos extends ListActivity {
 			mFilterTagIds.add(id);
 		}
 		
-		TextView name = (TextView) v.findViewById(R.id.tag_name);
-		name.setTextColor(deleted ? Color.BLACK : Color.GREEN);
+		// TextView name = (TextView) v.findViewById(R.id.tag_name);
+		// name.setTextColor(deleted ? Color.BLACK : Color.GREEN);
+
+		Intent data = new Intent();
+    	addTags(data);
+    	setResult(RESULT_OK, data);
+        finish();
 	}
 
 }
