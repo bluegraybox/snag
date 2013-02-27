@@ -16,17 +16,17 @@ import android.widget.TextView;
 
 public class FilterMemos extends ListActivity {
 
-	private List<Long> mFilterTagIds = new ArrayList<Long>();
-	private FilterMemos mThis;
-	private DbAdapter mDb;
-	
-	
+    private List<Long> mFilterTagIds = new ArrayList<Long>();
+    private FilterMemos mThis;
+    private DbAdapter mDb;
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         mThis = this;  // So inner classes can reference us
         mDb = DbAdapter.instance(this);
-        
+
         setContentView(R.layout.filter_memos);
         setTitle(R.string.filter_memos_title);
 
@@ -35,52 +35,52 @@ public class FilterMemos extends ListActivity {
         Button saveButton = (Button) findViewById(R.id.filter_by_tags);
         saveButton.setOnClickListener(new View.OnClickListener() {
             public void onClick(View view) {
-            	Intent data = new Intent();
-            	addTags(data);
-            	setResult(RESULT_OK, data);
+                Intent data = new Intent();
+                addTags(data);
+                setResult(RESULT_OK, data);
                 finish();
             }
         });
     }
 
 
-	private void addTags(Intent data) {
-		int tagCount = mFilterTagIds.size();
-		long[] tagIds = new long[tagCount];
-		for (int i = 0; i < tagCount; i++) {
-			tagIds[i] = mFilterTagIds.get(i);
-		}
-//				data.getExtras().putLongArray(Snag.FILTERS, tagIds);
-		data.putExtra(Snag.FILTERS, tagIds);
-		long[] check = data.getExtras().getLongArray(Snag.FILTERS);
-	}
+    private void addTags(Intent data) {
+        int tagCount = mFilterTagIds.size();
+        long[] tagIds = new long[tagCount];
+        for (int i = 0; i < tagCount; i++) {
+            tagIds[i] = mFilterTagIds.get(i);
+        }
+//              data.getExtras().putLongArray(Snag.FILTERS, tagIds);
+        data.putExtra(Snag.FILTERS, tagIds);
+        long[] check = data.getExtras().getLongArray(Snag.FILTERS);
+    }
 
 
-	private void populateFields() {
-		Cursor tagCursor = mDb.getTags();
-		startManagingCursor(tagCursor);
-		String[] from = new String[]{ DbAdapter.NAME };
-		int[] to = new int[]{ R.id.tag_name };
-		SimpleCursorAdapter tags = new SimpleCursorAdapter(this, R.layout.tag_row, tagCursor, from, to);
-		setListAdapter(tags);
-	}
+    private void populateFields() {
+        Cursor tagCursor = mDb.getTags();
+        startManagingCursor(tagCursor);
+        String[] from = new String[]{ DbAdapter.NAME };
+        int[] to = new int[]{ R.id.tag_name };
+        SimpleCursorAdapter tags = new SimpleCursorAdapter(this, R.layout.tag_row, tagCursor, from, to);
+        setListAdapter(tags);
+    }
 
-	@Override
-	protected void onListItemClick(ListView l, View v, int position, long id) {
-		super.onListItemClick(l, v, position, id);
-		// Toggle list membership
-		boolean deleted = mFilterTagIds.remove(id);
-		if (! deleted) {
-			mFilterTagIds.add(id);
-		}
-		
-		// TextView name = (TextView) v.findViewById(R.id.tag_name);
-		// name.setTextColor(deleted ? Color.BLACK : Color.GREEN);
+    @Override
+    protected void onListItemClick(ListView l, View v, int position, long id) {
+        super.onListItemClick(l, v, position, id);
+        // Toggle list membership
+        boolean deleted = mFilterTagIds.remove(id);
+        if (! deleted) {
+            mFilterTagIds.add(id);
+        }
 
-		Intent data = new Intent();
-    	addTags(data);
-    	setResult(RESULT_OK, data);
+        // TextView name = (TextView) v.findViewById(R.id.tag_name);
+        // name.setTextColor(deleted ? Color.BLACK : Color.GREEN);
+
+        Intent data = new Intent();
+        addTags(data);
+        setResult(RESULT_OK, data);
         finish();
-	}
+    }
 
 }

@@ -14,18 +14,18 @@ import android.widget.EditText;
 public class EditMemo extends Activity {
 
     protected static final int ACTIVITY_TAG = 1;
-	private EditText mBodyText;
+    private EditText mBodyText;
     private Long mMemoId;
-	private DbAdapter mDb;
-	private EditMemo mThis;
+    private DbAdapter mDb;
+    private EditMemo mThis;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        
+
         mDb = DbAdapter.instance(this);
         mThis = this;  // So inner classes can reference us
-        
+
         setContentView(R.layout.edit_memo);
         setTitle(R.string.edit_memo);
 
@@ -37,16 +37,16 @@ public class EditMemo extends Activity {
 
         mMemoId = null;
         if (savedInstanceState != null) {
-        	// use getSerializable because getLong defaults to 0, not null
-        	mMemoId = (Long) savedInstanceState.getSerializable(DbAdapter.ID);
+            // use getSerializable because getLong defaults to 0, not null
+            mMemoId = (Long) savedInstanceState.getSerializable(DbAdapter.ID);
         }
         if (mMemoId == null) {
-        	Bundle extras = getIntent().getExtras();
-        	if (extras != null) {
-        		mMemoId = extras.getLong(DbAdapter.ID);
-        	}
+            Bundle extras = getIntent().getExtras();
+            if (extras != null) {
+                mMemoId = extras.getLong(DbAdapter.ID);
+            }
         }
-        
+
         populateFields();
 
         saveButton.setOnClickListener(new View.OnClickListener() {
@@ -58,7 +58,7 @@ public class EditMemo extends Activity {
 
         deleteButton.setOnClickListener(new View.OnClickListener() {
             public void onClick(View view) {
-            	// FIXME: add a pop-up confirmation here
+                // FIXME: add a pop-up confirmation here
                 mDb.deleteMemo(mMemoId);
                 setResult(RESULT_OK);
                 finish();
@@ -67,63 +67,63 @@ public class EditMemo extends Activity {
 
         tagButton.setOnClickListener(new View.OnClickListener() {
             public void onClick(View view) {
-            	saveState(); // sets mMemoId
-        		Intent i = new Intent(mThis, TagMemo.class);
-        		i.putExtra(DbAdapter.ID, mMemoId);
-        		startActivityForResult(i, ACTIVITY_TAG);
+                saveState(); // sets mMemoId
+                Intent i = new Intent(mThis, TagMemo.class);
+                i.putExtra(DbAdapter.ID, mMemoId);
+                startActivityForResult(i, ACTIVITY_TAG);
             }
         });
     }
 
-	private void populateFields() {
-		if (mMemoId != null) {
-			Cursor memo = mDb.getMemo(mMemoId);
-	    	int index = memo.getColumnIndexOrThrow(DbAdapter.BODY);
-			mBodyText.setText(memo.getString(index));
-			memo.close();
-		}
-	}
+    private void populateFields() {
+        if (mMemoId != null) {
+            Cursor memo = mDb.getMemo(mMemoId);
+            int index = memo.getColumnIndexOrThrow(DbAdapter.BODY);
+            mBodyText.setText(memo.getString(index));
+            memo.close();
+        }
+    }
 
-	@Override
-	protected void onPause() {
-		super.onPause();
-		saveState();
-	}
+    @Override
+    protected void onPause() {
+        super.onPause();
+        saveState();
+    }
 
-	@Override
-	protected void onResume() {
-		super.onResume();
-		populateFields();
-	}
+    @Override
+    protected void onResume() {
+        super.onResume();
+        populateFields();
+    }
 
-	@Override
-	protected void onSaveInstanceState(Bundle outState) {
-		super.onSaveInstanceState(outState);
-		saveState();
-		outState.putSerializable(DbAdapter.ID, mMemoId);
-	}
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        saveState();
+        outState.putSerializable(DbAdapter.ID, mMemoId);
+    }
 
-	private void saveState() {
-		String body = mBodyText.getText().toString();
-		
-		if (mMemoId == null) {
-			long id = mDb.createMemo(body);
-			if (id > 0) {
-				mMemoId = id;
-			}
-		}
-		else {
-			mDb.updateMemo(mMemoId, body);
-		}
-	}
+    private void saveState() {
+        String body = mBodyText.getText().toString();
 
-	@Override
-	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-		super.onActivityResult(requestCode, resultCode, data);
-		if (requestCode == ACTIVITY_TAG) {
+        if (mMemoId == null) {
+            long id = mDb.createMemo(body);
+            if (id > 0) {
+                mMemoId = id;
+            }
+        }
+        else {
+            mDb.updateMemo(mMemoId, body);
+        }
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == ACTIVITY_TAG) {
             setResult(RESULT_OK);
             finish();
-		}
-	}
+        }
+    }
 
 }
